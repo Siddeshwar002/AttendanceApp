@@ -67,7 +67,19 @@ async function get_courses(req, res) {
     });
     if (!user) return res.status(404).send("Lecturer not found !!!");
 
-    return res.status(200).send(user.courses);
+    for (eachCourse of user.courses) {
+      try {
+        const courseDetails = await Course.find({
+          key: eachCourse,
+        });
+
+        return res.status(200).send(courseDetails);
+      } catch (e) {
+        res.status(501).send(`Error ${e}`);
+      }
+    }
+
+    return res.status(200).send("No courses Yet");
   } catch (e) {
     return res.status(501).send(`Error: ${e}`);
   }
@@ -160,7 +172,7 @@ async function add_attendance(req, res) {
         "Include key, course, dateString and attendance array in request body !"
       );
 
-  const course_exists = await Course.findOne({ courseCode: course });
+  const course_exists = await Course.findOne({ name: course });
 
   if (!course_exists) return res.status(404).send("Invalid course code !");
 
@@ -195,24 +207,29 @@ async function add_attendance(req, res) {
         );
       } catch (e) {
         console.log(e);
+        return res.status(401).send(`cant update the same `);
       }
     }
 
     // first time adding the attendace data
     // works for the first entry of the student's data
-    await new Attendance({
-      dateString,
-      course: course_exists._id,
-      students: [
-        {
-          usn: student_exists._id,
-          present: entry.attendance,
-        },
-      ],
-    }).save();
-  }
+    try {
+      await new Attendance({
+        dateString,
+        course: course_exists._id,
+        students: [
+          {
+            usn: student_exists._id,
+            present: entry.attendance,
+          },
+        ],
+      }).save();
+    } catch (e) {
+      return res.status(401).send(`cant update the same `);
+    }
 
-  return res.status(200).send("Attendance updated !");
+    return res.status(200).send("Attendance updated !");
+  }
 }
 
 async function get_attendance(req, res) {
