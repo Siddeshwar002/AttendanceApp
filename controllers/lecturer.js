@@ -66,7 +66,7 @@ async function get_courses(req, res) {
 
   try {
     const user = await Lecturer.findOne({
-      key,
+      _id : key,
     });
     if (!user) return res.status(404).send("Lecturer not found !!!");
 
