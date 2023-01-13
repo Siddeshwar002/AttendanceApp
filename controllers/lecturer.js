@@ -58,7 +58,9 @@ async function register(req, res) {
 }
 
 async function get_courses(req, res) {
-  const { key } = req.body;
+  let { key } = req.body;
+
+  key = JSON.stringify(key);
 
   if (!key) return res.status(401).send("Include key in request body !");
 
@@ -69,6 +71,8 @@ async function get_courses(req, res) {
     if (!user) return res.status(404).send("Lecturer not found !!!");
 
     for (eachCourse of user.courses) {
+      // console.log("eachCourse \n" + eachCourse);
+
       try {
         const courseDetails = await Course.find({
           key: eachCourse,
