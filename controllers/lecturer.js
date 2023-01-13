@@ -60,7 +60,7 @@ async function register(req, res) {
 async function get_courses(req, res) {
   let { key } = req.body;
 
-  key = JSON.stringify(key);
+  // key = JSON.stringify(key);
 
   if (!key) return res.status(401).send("Include key in request body !");
 
