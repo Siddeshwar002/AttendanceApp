@@ -68,13 +68,30 @@ async function register_courses(req, res) {
 
   if (!isCourse) return res.status(401).send("Course doesnt exists");
 
-  await Student.updateOne({ _id: key }, { $push: { courses: isCourse._id } });
+  let StudentCourse;
+  try {
+    StudentCourse = await Student.findOne(
+      {
+        key,
+      },
+      {
+        courses: 1,
+      }
+    );
+  } catch (e) {
+    return res.status(501).send(`Error ${e}`);
+  }
 
-  return res.status(200).send("Course updated");
+  if (!StudentCourse.courses.includes(isCourse._id)) {
+    await Student.updateOne({ _id: key }, { $push: { courses: isCourse._id } });
+    return res.status(200).send("Course updated");
+  }
+  return res.status(201).send("Course Already Exsiting");
 }
 
 async function get_attendance(req, res) {
   const { key } = req.body;
+  let CourseAndAtttendances = [];
 
   try {
     const all_Courses = await Student.findOne(
@@ -84,11 +101,12 @@ async function get_attendance(req, res) {
       { courses: 1 }
     );
 
-    console.log("All Courses \n\n" + all_Courses);
-    let present = 0;
+    // console.log("All Courses \n\n" + all_Courses);
 
     for (const each_Course of all_Courses.courses) {
-      console.log(each_Course);
+      console.log("each_Course\n" + each_Course);
+
+      let present = 0;
 
       try {
         const each_Course_Attendance = await Attendance.find(
@@ -100,20 +118,48 @@ async function get_attendance(req, res) {
           }
         );
 
-        console.log("each_Course_Attendance\n\n" + each_Course_Attendance);
+        // console.log("each_Course_Attendance\n\n" + each_Course_Attendance);
+        // console.log("students \n" + each_Course_Attendance[0].students);
 
-        console.log("students \n" + each_Course_Attendance.students);
+        let totalClassesOfEachCourse = each_Course_Attendance.length;
+        // console.log("totalClassesOfEachCourse \n" + totalClassesOfEachCourse);
 
-        // for (const EachStudent of each_Course_Attendance.students) {
-        //   console.log("student : ", EachStudent);
-        // }
-        
+        for (const eachDay of each_Course_Attendance) {
+          for (const EachStudent of eachDay.students) {
+            console.log("student : \n", EachStudent);
+            if (key == EachStudent.usn && EachStudent.present) {
+              present++;
+              // console.log("present \n" + present);
+            }
+          }
+        }
+
+        let percentage = (present / totalClassesOfEachCourse) * 100;
+        // console.log("percentage \n" + percentage);
+
+        try {
+          const CourseData = await Course.findOne({
+            each_Course,
+          });
+
+          let EachCourseFinalData = {
+            name: CourseData.name,
+            Attendancepercentage: percentage,
+          };
+
+          // console.log( "EachCourseFinalData\n" + EachCourseFinalData.Attendancepercentage);
+
+          CourseAndAtttendances.push(EachCourseFinalData);
+          // console.log("CourseAndAtttendances\n" + CourseAndAtttendances);
+        } catch (e) {
+          return res.status(501).send(`Error ${e}`);
+        }
       } catch (e) {
         return res.status(501).send(`Error ${e}`);
       }
     }
 
-    return res.status(201).send("Sucess");
+    return res.status(201).send({ CourseAndAtttendances });
   } catch (e) {
     return res.status(501).send(`Error ${e}`);
   }

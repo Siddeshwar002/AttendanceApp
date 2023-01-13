@@ -6,6 +6,7 @@ const {
   get_courses,
   add_attendance,
   add_course,
+  get_attendance,
 } = require("../controllers/lecturer");
 
 const router = express.Router();
@@ -17,5 +18,6 @@ router.post("/register", register);
 router.post("/get-courses", get_courses);
 router.post("/add-course", add_course);
 router.post("/add-attendance", add_attendance);
+router.post("/get-attendance", get_attendance);
 
 module.exports = router;

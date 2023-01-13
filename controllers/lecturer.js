@@ -3,6 +3,7 @@ const { Lecturer } = require("../Models/lecturer");
 const { Attendance } = require("../Models/attendance");
 const { Course } = require("../Models/course");
 const { Student } = require("../Models/student");
+const { ReadConcern } = require("mongodb");
 
 async function login(req, res) {
   console.log("Lecturer login ...");
@@ -233,16 +234,69 @@ async function add_attendance(req, res) {
 }
 
 async function get_attendance(req, res) {
-  const { key, name } = req.body;
+  const { courseName } = req.body;
 
-  if (!key || !name) return res.status(401).send(`Invalid key and name`);
+  if (!courseName) return res.status(401).send(`Invalid key and name`);
 
+  let course;
   try {
-    const course = await Course.findOne({
-      name,
+    course = await Course.findOne({
+      name: courseName,
     });
   } catch (e) {
     return res.status(501).send(`Error 1 : ${e}`);
+  }
+
+  let Course_Attendance;
+  try {
+    Course_Attendance = await Attendance.find(
+      {
+        course: course._id,
+      },
+      {
+        students: 1,
+      }
+    );
+  } catch (e) {
+    return res.status(501).send(`Error : ${e}`);
+  }
+
+  let Course_Students;
+  try {
+    Course_Students = await Student.find({
+      courses: { $in: course._id },
+    });
+
+    // console.log("Course_Students \n" + Course_Students);
+
+    let TotalClasses = Course_Attendance.length;
+    let All_Students_Data = [];
+
+    for (const EachStudent of Course_Students) {
+      let present = 0;
+
+      for (EachDay of Course_Attendance) {
+        for (EachEntry of EachDay.students) {
+          if (EachStudent.usn == EachEntry.usn && EachEntry.present) {
+            present++;
+          }
+        }
+      }
+
+      let EachStudentData = {
+        name: EachStudent.name,
+        usn: EachStudent.usn,
+        Attendance: (present / TotalClasses) * 100,
+      };
+
+      All_Students_Data.push(EachStudentData);
+    }
+
+    // console.log("All_Students_Data\n" + All_Students_Data);
+
+    return res.status(201).send({All_Students_Data});
+  } catch (e) {
+    return res.status(501).send(`Error ${e}`);
   }
 }
 
@@ -252,4 +306,5 @@ module.exports = {
   get_courses,
   add_attendance,
   add_course,
+  get_attendance,
 };

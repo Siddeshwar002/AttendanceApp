@@ -5,7 +5,8 @@ const AttendanceSchema = new mongoose.Schema({
   course: { type: mongoose.Schema.ObjectId, required: true, ref: "course" },
   students: [
     {
-      usn: { type: mongoose.Schema.ObjectId, required: true, ref: "student" },
+      // usn: { type: mongoose.Schema.ObjectId, required: true, ref: "student" },
+      usn : {type : String , unique : true},
       present: { type: Boolean, required: true },
     },
   ],
