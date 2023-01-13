@@ -64,7 +64,7 @@ async function get_courses(req, res) {
 
   try {
     const user = await Lecturer.findOne({
-      _id: mongoose.Types.ObjectId(key),
+      key,
     });
     if (!user) return res.status(404).send("Lecturer not found !!!");
 
@@ -294,7 +294,7 @@ async function get_attendance(req, res) {
 
     // console.log("All_Students_Data\n" + All_Students_Data);
 
-    return res.status(201).send({All_Students_Data});
+    return res.status(201).send({ All_Students_Data });
   } catch (e) {
     return res.status(501).send(`Error ${e}`);
   }
