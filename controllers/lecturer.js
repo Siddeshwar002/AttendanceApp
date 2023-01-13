@@ -76,7 +76,7 @@ async function get_courses(req, res) {
 
         return res.status(200).send(courseDetails);
       } catch (e) {
-        res.status(501).send(`Error ${e}`);
+        res.status(502).send(`Error ${e}`);
       }
     }
 
