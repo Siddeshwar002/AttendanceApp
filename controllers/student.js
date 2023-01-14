@@ -59,31 +59,39 @@ async function register_courses(req, res) {
   if (!key || !courseName)
     return res.status(401).send("Include key and course list in request body");
 
-  const student = await Student.findOne({ _id: key });
-
   // if (!student.courseEditable)
   //   return res.status(400).send("Course cannot be edited at the moment !");
 
-  const isCourse = await Course.findOne({ name: courseName });
+  const isCourse = await Course.findOne({ name : courseName });
+
+  console.log("isCourse \n" + isCourse);
 
   if (!isCourse) return res.status(401).send("Course doesnt exists");
 
   let StudentCourse;
   try {
-    StudentCourse = await Student.findOne(
-      {
-        key,
-      },
-      {
-        courses: 1,
-      }
-    );
+    StudentCourse = await Student.findOne({
+      _id : key,
+    });
+
   } catch (e) {
     return res.status(501).send(`Error ${e}`);
   }
 
+  console.log("StudentCourse\n" + StudentCourse.courses.includes(isCourse._id));
+
   if (!StudentCourse.courses.includes(isCourse._id)) {
-    await Student.updateOne({ _id: key }, { $push: { courses: isCourse._id } });
+    console.log("_id " + isCourse._id);
+    console.log("name " + isCourse.name);
+
+    await Student.updateOne(
+      {
+        _id : key,
+      },
+      {
+        $push: { courses: isCourse._id },
+      }
+    );
     return res.status(200).send("Course updated");
   }
   return res.status(201).send("Course Already Exsiting");
@@ -94,16 +102,16 @@ async function get_attendance(req, res) {
   let CourseAndAtttendances = [];
 
   try {
-    const all_Courses = await Student.findOne(
-      {
-        key,
-      },
-      { courses: 1 }
-    );
+    const CurrentStudent = await Student.findOne({
+      _id: key,
+    });
 
-    // console.log("All Courses \n\n" + all_Courses);
+    console.log("CurrentStudent \n\n" + CurrentStudent);
 
-    for (const each_Course of all_Courses.courses) {
+    if (CurrentStudent.courses == null)
+      return res.status(401).send(`NO courses registerd`);
+
+    for (const each_Course of CurrentStudent.courses) {
       console.log("each_Course\n" + each_Course);
 
       let present = 0;
@@ -111,25 +119,27 @@ async function get_attendance(req, res) {
       try {
         const each_Course_Attendance = await Attendance.find(
           {
-            each_Course,
+            course: each_Course,
           },
           {
             students: 1,
           }
         );
 
-        // console.log("each_Course_Attendance\n\n" + each_Course_Attendance);
+        // console.log("each_Course_Attendance\n" + each_Course_Attendance);
         // console.log("students \n" + each_Course_Attendance[0].students);
 
         let totalClassesOfEachCourse = each_Course_Attendance.length;
-        // console.log("totalClassesOfEachCourse \n" + totalClassesOfEachCourse);
+        console.log("totalClassesOfEachCourse \n" + totalClassesOfEachCourse);
 
         for (const eachDay of each_Course_Attendance) {
+          console.log("eachDay \n " + eachDay);
           for (const EachStudent of eachDay.students) {
             console.log("student : \n", EachStudent);
-            if (key == EachStudent.usn && EachStudent.present) {
+            console.log("CurrentStudent.usn \n" + CurrentStudent.usn);
+            if (CurrentStudent.usn == EachStudent.usn && EachStudent.present) {
               present++;
-              // console.log("present \n" + present);
+              console.log("present \n" + present);
             }
           }
         }
@@ -139,7 +149,7 @@ async function get_attendance(req, res) {
 
         try {
           const CourseData = await Course.findOne({
-            each_Course,
+            _id: each_Course,
           });
 
           let EachCourseFinalData = {
@@ -147,7 +157,7 @@ async function get_attendance(req, res) {
             Attendancepercentage: percentage,
           };
 
-          // console.log( "EachCourseFinalData\n" + EachCourseFinalData.Attendancepercentage);
+          console.log("EachCourseFinalData\n" + EachCourseFinalData.name);
 
           CourseAndAtttendances.push(EachCourseFinalData);
           // console.log("CourseAndAtttendances\n" + CourseAndAtttendances);

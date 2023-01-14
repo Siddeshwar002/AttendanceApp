@@ -4,6 +4,7 @@ const { Attendance } = require("../Models/attendance");
 const { Course } = require("../Models/course");
 const { Student } = require("../Models/student");
 const { ReadConcern } = require("mongodb");
+const { use } = require("../routes/student");
 
 async function login(req, res) {
   console.log("Lecturer login ...");
@@ -58,40 +59,43 @@ async function register(req, res) {
 }
 
 async function get_courses(req, res) {
-  let { key } = req.body;
+  const { key } = req.body;
 
   // key = JSON.stringify(key);
 
   if (!key) return res.status(401).send("Include key in request body !");
 
+  let AllCourses = [];
   try {
     const user = await Lecturer.findOne({
-      _id : key,
+      _id: key,
     });
     if (!user) return res.status(404).send("Lecturer not found !!!");
 
+    if (user.courses == null) return res.status(200).send("No courses Yet");
+
     for (eachCourse of user.courses) {
-      // console.log("eachCourse \n" + eachCourse);
+      console.log("eachCourse \n" + eachCourse);
 
       try {
         const courseDetails = await Course.find({
-          key: eachCourse,
+          _id: eachCourse,
         });
 
-        return res.status(200).send(courseDetails);
+        AllCourses.push(courseDetails);
       } catch (e) {
         res.status(502).send(`Error ${e}`);
       }
     }
 
-    return res.status(200).send("No courses Yet");
+    return res.status(200).send(AllCourses);
   } catch (e) {
     return res.status(501).send(`Error: ${e}`);
   }
 }
 
 async function add_course(req, res) {
-  const { key, lecturerID, name, courseCode } = req.body;
+  const { key, name, courseCode } = req.body;
 
   console.log(key + "\n" + name + "\n" + courseCode);
 
@@ -130,7 +134,7 @@ async function add_course(req, res) {
       try {
         await Lecturer.updateOne(
           {
-            lecturerID,
+            _id: key,
           },
           {
             $push: {
@@ -179,10 +183,10 @@ async function add_attendance(req, res) {
 
   const course_exists = await Course.findOne({ name: course });
 
-  if (!course_exists) return res.status(404).send("Invalid course code !");
+  if (!course_exists) return res.status(404).send("Invalid course !");
 
   for (const entry of attendances) {
-    console.log(entry);
+    console.log("entry \n" + entry);
 
     // checks for the student
     const student_exists = await Student.findOne({ usn: entry.student });
@@ -192,7 +196,8 @@ async function add_attendance(req, res) {
     if (!student_exists) continue;
 
     const attendance_exists = await Attendance.findOne({
-      dateString: dateString,
+      dateString,
+      course: course_exists._id,
     });
 
     // once the attendance for the particular date and course
@@ -204,7 +209,7 @@ async function add_attendance(req, res) {
           {
             $push: {
               students: {
-                usn: student_exists._id,
+                usn: student_exists.usn,
                 present: entry.attendance,
               },
             },
@@ -224,17 +229,17 @@ async function add_attendance(req, res) {
         course: course_exists._id,
         students: [
           {
-            usn: student_exists._id,
+            usn: student_exists.usn,
             present: entry.attendance,
           },
         ],
       }).save();
     } catch (e) {
-      return res.status(401).send(`cant update the same `);
+      console.log(e);
+      return res.status(402).send(`cant update the same `);
     }
-
-    return res.status(200).send("Attendance updated !");
   }
+  return res.status(200).send("Attendance updated !");
 }
 
 async function get_attendance(req, res) {
@@ -251,6 +256,10 @@ async function get_attendance(req, res) {
     return res.status(501).send(`Error 1 : ${e}`);
   }
 
+  console.log("course \n" + course);
+
+  if (!course) return res.status(401).send(`Error : Course dosent Exists`);
+
   let Course_Attendance;
   try {
     Course_Attendance = await Attendance.find(
@@ -258,12 +267,14 @@ async function get_attendance(req, res) {
         course: course._id,
       },
       {
-        students: 1,
+        // students: 1,
       }
     );
   } catch (e) {
     return res.status(501).send(`Error : ${e}`);
   }
+
+  console.log("Course_Attendance \n" + Course_Attendance);
 
   let Course_Students;
   try {
@@ -271,7 +282,7 @@ async function get_attendance(req, res) {
       courses: { $in: course._id },
     });
 
-    // console.log("Course_Students \n" + Course_Students);
+    console.log("Course_Students \n" + Course_Students);
 
     let TotalClasses = Course_Attendance.length;
     let All_Students_Data = [];

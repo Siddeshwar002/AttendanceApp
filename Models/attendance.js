@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 
 const AttendanceSchema = new mongoose.Schema({
-  dateString: { type: String, unique: true },
+  dateString: { type: String },
   course: { type: mongoose.Schema.ObjectId, required: true, ref: "course" },
   students: [
     {
-      // usn: { type: mongoose.Schema.ObjectId, required: true, ref: "student" },
-      usn : {type : String , unique : true},
+      // usn: { type: mongoose.Schema.ObjectId, required: true, ref: "student" , unique:false},
+      usn : {type : String },
       present: { type: Boolean, required: true },
     },
   ],
