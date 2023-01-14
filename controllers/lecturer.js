@@ -177,10 +177,10 @@ async function add_attendance(req, res) {
 
   // console.log(req.body);
 
-  key = JSON.stringify(key);
-  attendances = JSON.stringify(attendances);
-  dateString = JSON.stringify(dateString);
-  course = JSON.stringify(course);
+  key = JSON.parse(key);
+  attendances = JSON.parse(attendances);
+  dateString = JSON.parse(dateString);
+  course = JSON.parse(course);
 
   console.log("key \n" + key);
 
