@@ -177,12 +177,12 @@ async function add_attendance(req, res) {
 
   // console.log(req.body);
 
-  key = JSON.parse(key);
-  attendances = JSON.parse(attendances);
-  dateString = JSON.parse(dateString);
-  course = JSON.parse(course);
+  // key = JSON.parse(key);
+  // attendances = JSON.parse(attendances);
+  // dateString = JSON.parse(dateString);
+  // course = JSON.parse(course);
 
-  console.log("key \n" + key);
+  // console.log("key \n" + key);
 
   if (!key || !attendances || !dateString || !course)
     return res
