@@ -5,6 +5,7 @@ const { Course } = require("../Models/course");
 const { Student } = require("../Models/student");
 const { ReadConcern } = require("mongodb");
 const { use } = require("../routes/student");
+const { json } = require("body-parser");
 
 async function login(req, res) {
   console.log("Lecturer login ...");
@@ -172,7 +173,16 @@ async function add_attendance(req, res) {
   // ]
   // }
 
-  const { key, attendances, dateString, course } = req.body;
+  let { key, attendances, dateString, course } = req.body;
+
+  // console.log(req.body);
+
+  key = JSON.stringify(key);
+  attendances = JSON.stringify(attendances);
+  dateString = JSON.stringify(dateString);
+  course = JSON.stringify(course);
+
+  console.log("key \n" + key);
 
   if (!key || !attendances || !dateString || !course)
     return res
