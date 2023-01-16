@@ -175,13 +175,6 @@ async function add_attendance(req, res) {
 
   let { key, attendances, dateString, course } = req.body;
 
-  // console.log(req.body);
-
-  // key = JSON.parse(key);
-  // attendances = JSON.parse(attendances);
-  // dateString = JSON.parse(dateString);
-  // course = JSON.parse(course);
-
   // console.log("key \n" + key);
 
   if (!key || !attendances || !dateString || !course)
@@ -191,9 +184,19 @@ async function add_attendance(req, res) {
         "Include key, course, dateString and attendance array in request body !"
       );
 
+  const uniqu_id = dateString + "-" + course;
+  console.log("uniqu_id\n" + uniqu_id);
+
   const course_exists = await Course.findOne({ name: course });
 
   if (!course_exists) return res.status(404).send("Invalid course !");
+
+  const attendance_exists = await Attendance.findOne({
+    uniqu_id,
+  });
+
+  if (attendance_exists)
+    return res.status(403).send(`Cant have Duplicate Attendance`);
 
   for (const entry of attendances) {
     console.log("entry \n" + entry);
@@ -205,17 +208,16 @@ async function add_attendance(req, res) {
     // if we find enrty of student who hasn't been registerd yet
     if (!student_exists) continue;
 
-    const attendance_exists = await Attendance.findOne({
-      dateString,
-      course: course_exists._id,
+    const attendance_table = await Attendance.findOne({
+      uniqu_id,
     });
 
     // once the attendance for the particular date and course
     // has been created, this below code gets executed
-    if (attendance_exists) {
+    if (attendance_table) {
       try {
         await Attendance.updateOne(
-          { dateString: dateString },
+          { uniqu_id },
           {
             $push: {
               students: {
@@ -233,20 +235,23 @@ async function add_attendance(req, res) {
 
     // first time adding the attendace data
     // works for the first entry of the student's data
-    try {
-      await new Attendance({
-        dateString,
-        course: course_exists._id,
-        students: [
-          {
-            usn: student_exists.usn,
-            present: entry.attendance,
-          },
-        ],
-      }).save();
-    } catch (e) {
-      console.log(e);
-      return res.status(402).send(`cant update the same `);
+    else if (!attendance_table) {
+      try {
+        await new Attendance({
+          uniqu_id,
+          dateString,
+          course: course_exists._id,
+          students: [
+            {
+              usn: student_exists.usn,
+              present: entry.attendance,
+            },
+          ],
+        }).save();
+      } catch (e) {
+        console.log(e);
+        return res.status(402).send(`cant update the same `);
+      }
     }
   }
   return res.status(200).send("Attendance updated !");

@@ -38,6 +38,17 @@ async function register(req, res) {
         "Include valid name, email, password, phone number and usn within request body"
       );
 
+  let Curr_Student;
+  try {
+    Curr_Student = await Student.findOne({
+      usn,
+    });
+  } catch (e) {
+    return res.status(501).send(`Error : ${e}`);
+  }
+
+  if (Curr_Student) return res.status(401).send(`User Already Exists`);
+
   try {
     await new Student({
       usn,
@@ -46,7 +57,6 @@ async function register(req, res) {
       phone,
       password,
     }).save();
-
     res.status(200).send("Registration Successful");
   } catch (e) {
     res.status(501).send(`User already Exists`);
@@ -62,7 +72,7 @@ async function register_courses(req, res) {
   // if (!student.courseEditable)
   //   return res.status(400).send("Course cannot be edited at the moment !");
 
-  const isCourse = await Course.findOne({ name : courseName });
+  const isCourse = await Course.findOne({ name: courseName });
 
   console.log("isCourse \n" + isCourse);
 
@@ -71,9 +81,8 @@ async function register_courses(req, res) {
   let StudentCourse;
   try {
     StudentCourse = await Student.findOne({
-      _id : key,
+      _id: key,
     });
-
   } catch (e) {
     return res.status(501).send(`Error ${e}`);
   }
@@ -86,7 +95,7 @@ async function register_courses(req, res) {
 
     await Student.updateOne(
       {
-        _id : key,
+        _id: key,
       },
       {
         $push: { courses: isCourse._id },
