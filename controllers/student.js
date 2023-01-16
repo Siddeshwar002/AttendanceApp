@@ -202,10 +202,42 @@ async function get_profile(req, res) {
   }
 }
 
+async function delete_course(req, res) {
+  const { key, courseName } = req.body;
+
+  let student;
+  try {
+    student = await Student.findOne({ _id: key });
+  } catch (e) {
+    return res.status(501).send(`Error ${e}`);
+  }
+
+  let course;
+  try {
+    course = await Course.findOne({ name: courseName });
+  } catch (e) {
+    return res.status(501).send(`error : ${e}`);
+  }
+
+  if (!course) return res.status(401).send(`Course Doesnt Exist`);
+
+  try {
+    await Student.updateOne(
+      { _id: student._id, courses: { $in: course._id } },
+      { $pull: { courses: course._id } }
+    );
+  } catch (e) {
+    return res.status(403).send(`error : ${e}`);
+  }
+
+  return res.status(201).send(`Course Deleted Successfully`);
+}
+
 module.exports = {
   login,
   register,
   register_courses,
   get_profile,
   get_attendance,
+  delete_course,
 };

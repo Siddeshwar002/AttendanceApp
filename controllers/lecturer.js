@@ -330,6 +330,55 @@ async function get_attendance(req, res) {
   }
 }
 
+async function delete_course(req, res) {
+  const { courseName } = req.body;
+
+  let course;
+  try {
+    course = await Course.findOne({ name: courseName });
+  } catch (e) {
+    return res.status(501).send(`Error ${e}`);
+  }
+
+  if (!course) return res.status(401).send(`Course Doesnt Exist`);
+
+  try {
+    await Student.updateMany(
+      {
+        courses: { $in: course._id },
+      },
+      {
+        $pull: { courses: course._id },
+      }
+    );
+  } catch (e) {
+    return res.status(401).send(`Error ${e}`);
+  }
+
+  try {
+    await Lecturer.updateOne(
+      {
+        courses: { $in: course._id },
+      },
+      {
+        $pull: { courses: course._id },
+      }
+    );
+  } catch (e) {
+    return res.status(402).send(`Error ${e}`);
+  }
+
+  try {
+    await Course.deleteOne({
+      _id: course._id,
+    });
+  } catch (e) {
+    return res.status(403).send(`Error ${e}`);
+  }
+
+  return res.status(201).send(`Successfully Deleted !`);
+}
+
 module.exports = {
   login,
   register,
@@ -337,4 +386,5 @@ module.exports = {
   add_attendance,
   add_course,
   get_attendance,
+  delete_course,
 };
