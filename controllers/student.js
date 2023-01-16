@@ -164,6 +164,8 @@ async function get_attendance(req, res) {
           let EachCourseFinalData = {
             name: CourseData.name,
             Attendancepercentage: percentage,
+            AttendedClasses: present,
+            TotalClasses: totalClassesOfEachCourse,
           };
 
           console.log("EachCourseFinalData\n" + EachCourseFinalData.name);

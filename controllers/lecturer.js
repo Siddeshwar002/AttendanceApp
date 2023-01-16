@@ -317,6 +317,8 @@ async function get_attendance(req, res) {
         name: EachStudent.name,
         usn: EachStudent.usn,
         Attendance: (present / TotalClasses) * 100,
+        AttendedClasses: present,
+        TotalClasses: TotalClasses,
       };
 
       All_Students_Data.push(EachStudentData);
