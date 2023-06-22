@@ -15,7 +15,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const mongoose = require("mongoose");
 
-mongoose.connect("mongodb+srv://admin:admin@cluster0.ojjgc5y.mongodb.net/production").then(() => {
+mongoose.connect("<MongoDB Atlas URL>").then(() => {
   console.log("Connected to DB ...");
 });
 
